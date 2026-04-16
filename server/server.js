@@ -32,13 +32,23 @@ io.on("connection", (socket) => {
 
   });
 
-  socket.on("chat_message", (data) => {
+  socket.on("chat_message", async (data) => {
 
     const { room, message } = data;
 
-    console.log(`Message in ${room}:`, message);
+    try {
+      await pool.query(
+        "INSERT INTO messages (room, message) VALUES ($1, $2)",
+        [room, message]
+      );
 
-    io.to(room).emit("chat_message", message);
+      console.log("Message saved to DB");
+
+      io.to(room).emit("chat_message", message);
+
+    } catch (err) {
+      console.error("DB insert error:", err);
+    }
 
   });
 
