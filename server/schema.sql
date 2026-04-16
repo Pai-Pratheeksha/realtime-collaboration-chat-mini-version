@@ -16,3 +16,5 @@ CREATE TABLE messages (
   message TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE messages ADD COLUMN username VARCHAR(50);
