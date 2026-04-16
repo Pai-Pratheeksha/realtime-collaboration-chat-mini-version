@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const pool = require("./db");
+const roomUsers = {};
 
 const app = express();
 
@@ -28,7 +29,20 @@ io.on("connection", (socket) => {
 
     socket.join(room);
 
+    const username = socket.handshake.auth?.username || "Anonymous";
+
+    // initialize room if not exists
+    if (!roomUsers[room]) {
+      roomUsers[room] = [];
+    }
+
+    // store user
+    roomUsers[room].push({ id: socket.id, username });
+
     console.log(`User ${socket.id} joined room ${room}`);
+
+    // send updated user list to room
+    io.to(room).emit("online_users", roomUsers[room]);
 
     try {
       const result = await pool.query(
@@ -80,6 +94,17 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    for (let room in roomUsers) {
+
+      roomUsers[room] = roomUsers[room].filter(
+        user => user.id !== socket.id
+      );
+
+      // update remaining users in room
+      io.to(room).emit("online_users", roomUsers[room]);
+
+    }
+
     console.log("User disconnected:", socket.id);
   });
 });

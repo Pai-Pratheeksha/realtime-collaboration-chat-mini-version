@@ -1,4 +1,6 @@
-const socket = io("http://localhost:3000");
+const socket = io("http://localhost:3000", {
+  autoConnect: false
+});
 let typingTimeout;
 
 let currentRoom = "";
@@ -6,8 +8,13 @@ let currentRoom = "";
 function joinRoom() {
 
   const room = document.getElementById("roomInput").value;
+  const username = document.getElementById("usernameInput").value;
 
   currentRoom = room;
+
+  socket.auth = { username };
+
+  socket.connect();
 
   socket.emit("join_room", room);
 
@@ -75,6 +82,16 @@ socket.on("stop_typing", () => {
   const typingDiv = document.getElementById("typingIndicator");
 
   typingDiv.textContent = "";
+
+});
+
+socket.on("online_users", (users) => {
+
+  const usersDiv = document.getElementById("onlineUsers");
+
+  const usernames = users.map(u => u.username);
+
+  usersDiv.textContent = "Online: " + usernames.join(", ");
 
 });
 
